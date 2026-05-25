@@ -187,24 +187,26 @@ public DeviceSession refreshSession(final UUID userId, final UUID sessionId) {
             .orElseThrow(() -> new SessionNotFoundException(sessionId));
 }
 ```
-```
+
 
 **Tip:** Keep `CLAUDE.md` short and surgical. Claude Code reads it on every turn — bloat costs tokens on every message. If a rule only applies to one folder, put a smaller `CLAUDE.md` inside that folder; Claude Code picks up nested ones automatically.
 
 ---
 
-## 4. Skill — `/write-tutorial` (deep-dive tutorial generator)
+## 4. Command — `/write-tutorial` (deep-dive tutorial generator)
 
 **What it is:** Generates a structured, visual, production-grade technical tutorial as a Markdown file with Mermaid diagrams and realistic code examples.
 
 **Install:**
 
 ```bash
-mkdir -p ~/.claude/skills/write-tutorial
-# paste the block below into ~/.claude/skills/write-tutorial/SKILL.md
+mkdir -p ~/.claude/commands/write-tutorial.md
+# paste the block below into ~/.claude/skills/write-tutorial.md
 ```
 
-**Triggers:** `/write-tutorial`, "create a tutorial", "document this concept", "explain this for the team".
+**Triggers:** `/write-tutorial`, 
+
+[//]: # ("create a tutorial", "document this concept", "explain this for the team".)
 
 ```markdown
 ---
@@ -217,37 +219,67 @@ description: Generates a comprehensive, visually rich technical tutorial as a Ma
 When invoked with a topic or prompt, generate a deep-dive tutorial as a `.md` file in `docs/tutorials/`. **Do not dump the tutorial into chat** — write the file with the `Write` tool.
 
 ## 1. PREPARATION
+
 1. Identify the core technical concept from the user's prompt.
-2. `mkdir -p docs/tutorials`
-3. Filename: `docs/tutorials/YYYY-MM-DD-topic-slug.md`.
+2. Run `mkdir -p docs/tutorials` to ensure the directory exists.
+3. Filename convention: `docs/tutorials/YYYY-MM-DD-topic-slug.md`
+   - Use today's actual date.
+   - Slug must be lowercase, hyphenated, and descriptive (e.g., `2025-05-25-kafka-consumer-groups.md`).
 
 ## 2. CONTENT GENERATION RULES
+
 Required sections, in order:
 
 ### A. The Mental Model & First Principles
+
 Before any code, explain *why* this concept exists.
-- **First Principles:** strip the concept to its core truth (e.g., "Kafka is an append-only log", "Docker is a wrapper around Linux cgroups and namespaces").
-- **Mental Model:** real-world analogy that lets an engineer grok it intuitively.
+
+- **First Principles:** Strip the concept to its core truth (e.g., "Kafka is an append-only log", "Docker is a wrapper around Linux cgroups and namespaces").
+- **Mental Model:** Provide a real-world analogy that lets an engineer grok it intuitively. The analogy must map directly to the technical mechanics — not just the surface behaviour.
 
 ### B. Visual Architecture (Mermaid)
-At least one well-structured Mermaid diagram. Pick the right type:
-- `sequenceDiagram` for request lifecycles, OAuth flows, microservice traffic.
-- `flowchart TD` / `graph LR` for system architecture, data pipelines, decision trees.
-- `stateDiagram-v2` for entity states (e.g., payment lifecycle).
-- Group components with `subgraph`. Keep it readable.
+
+Include at least one well-structured Mermaid diagram. Pick the right type for the concept:
+
+- `sequenceDiagram` — request lifecycles, OAuth flows, microservice traffic.
+- `flowchart TD` / `graph LR` — system architecture, data pipelines, decision trees.
+- `stateDiagram-v2` — entity states (e.g., payment lifecycle, session states).
+- `erDiagram` — database schemas and relationships.
+
+Rules:
+- Group related components with `subgraph`.
+- Add meaningful labels to all edges/arrows.
+- Keep it readable — max ~15 nodes per diagram. Split into multiple diagrams if needed.
 
 ### C. Real-World Examples
-- **No Foo/Bar.** Use realistic names (`UserDeviceSession`, `PaymentTransaction`, `OrderFulfillment`).
-- Show the naive/bad approach first, then the optimized one.
+
+- **No Foo/Bar** — use production-realistic names (`UserDeviceSession`, `PaymentTransaction`, `OrderFulfillmentService`).
+- Structure each example as:
+  1. **Naive / problematic approach** — show the antipattern with code and explain *why* it fails.
+  2. **Optimized approach** — the correct pattern with a clear explanation of the tradeoffs.
+- All code samples must include language identifiers in fenced blocks (e.g., ` ```java `, ` ```yaml `).
 
 ### D. Edge Cases & Gotchas
-Where this technology or pattern breaks in production. Race conditions, partial failures, scaling cliffs.
+
+Where this technology or pattern breaks in production. Cover at minimum:
+
+- Race conditions or concurrency pitfalls.
+- Partial failure scenarios (e.g., network splits, half-applied transactions).
+- Scaling cliffs (e.g., what breaks at 10x load).
+- Common misconfiguration traps specific to this concept.
+
+### E. Quick Reference (optional but recommended)
+
+A compact table or bullet list summarising key config, commands, or API calls for fast lookup after the initial read.
 
 ## 3. EXECUTION
-Write the complete tutorial to the file with `Write`. Then respond with:
-1. The exact path of the generated file.
-2. A 2-sentence summary of the mental model used.
-3. A nudge to review the Mermaid diagrams and code samples for accuracy.
+
+1. Write the complete tutorial to the file using the `Write` tool.
+2. Respond with:
+   - The exact file path of the generated tutorial.
+   - A 2-sentence summary of the mental model used.
+   - A reminder to review Mermaid diagrams and code samples for accuracy before sharing with the team.
+
 ```
 
 **Tip for Claude Code:** If the project already has a docs convention (e.g., `mkdocs.yml` or a `README` linking to `/docs`), add a line to your project `CLAUDE.md` telling the skill where to write — it will override the default `docs/tutorials/` path.
